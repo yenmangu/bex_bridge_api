@@ -1,16 +1,28 @@
-const AppError = require('../utils/appError');
+import AppError from '../utils/appError.js';
 
 const sendErrorDev = (error, res) => {
 	const statusCode = error.statusCode || 500;
 	const status = error.status || 'error';
-	const message = error.message || 'Soemthing went very wrong';
+	const message = error.message || 'Something went very wrong';
 	const stack = error.stack;
+
+	// console.log('Error Name: ', error.name);
 
 	if (error.isOperational) {
 		return res.status(statusCode).json({ status, message, stack });
 	}
 
-	console.error('Something went very wrong: ', error.name, error);
+	console.error(
+		'Something went very wrong:',
+		'\nError Name: ',
+		error.name,
+		'\nError Message:',
+		error.message,
+		// '\nError Stack: ',
+		// error.stack,
+		'\nWhole Error:',
+		error
+	);
 
 	return res
 		.status(500)
@@ -38,6 +50,8 @@ const sendErrorProd = (error, res) => {
 };
 
 const globalErrorHandler = (err, req, res, next) => {
+	console.log('Error Name: ', err.name);
+
 	let error = '';
 	if (err.name === 'JsonWebTokenError') {
 		err = new AppError('Invalid token', 401);
@@ -57,4 +71,4 @@ const globalErrorHandler = (err, req, res, next) => {
 	sendErrorProd(err, res);
 };
 
-module.exports = globalErrorHandler;
+export default globalErrorHandler;
