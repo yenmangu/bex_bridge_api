@@ -38,12 +38,7 @@ const sendErrorProd = (error, res) => {
 		console.error('Operational Error: ', error);
 		return res.status(statusCode).json({ status, message });
 	}
-	console.error(
-		'Something went very wrong error: ',
-		error.name,
-		error.message,
-		stack
-	);
+	console.error('Something went very wrong error: ', error.name, error.message);
 	return res
 		.status(500)
 		.json({ status: 'error', message: 'Something went very wrong' });
@@ -65,7 +60,9 @@ const globalErrorHandler = (err, req, res, next) => {
 		err = new AppError(err.errors[0].message, 400);
 	}
 	const nodeEnv = process.env.NODE_ENV;
-	if (nodeEnv === 'developmnent' || nodeEnv === 'pre_dev') {
+	console.log('NodeEnv: ', nodeEnv);
+
+	if (nodeEnv === 'development' || nodeEnv === 'pre_dev') {
 		return sendErrorDev(err, res);
 	}
 	sendErrorProd(err, res);

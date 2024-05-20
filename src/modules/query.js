@@ -3,9 +3,19 @@ class Query {
 		// this.db = db;
 		this.query = '';
 		this.params = [];
+		this.explainFlag = false;
+	}
+	explain() {
+		this.query = 'EXPLAIN ';
+		this.explainFlag = true;
+		return this;
 	}
 	select(fields) {
-		this.query = `SELECT ${fields}`;
+		if (!this.explainFlag) {
+			this.query = `SELECT ${fields}`;
+		} else {
+			this.query += `SELECT ${fields}`;
+		}
 		return this;
 	}
 	from(table) {
@@ -44,10 +54,14 @@ class Query {
 	}
 	getQuery() {
 		console.log('getQuery initiated');
-		console.log('Query: ', this.query, 'Params: ', this.params);
+		console.log('Query: ', this.query, '\nParams: ', this.params);
 		const finishedQuery = `${this.query};`;
 
 		return { query: finishedQuery, params: this.params };
+	}
+	clear() {
+		this.params = [];
+		return this;
 	}
 
 	async findOne(table, condition) {}

@@ -19,7 +19,8 @@ class Database {
 	 */
 	async connect() {
 		try {
-			const connection = await this.connection.connect();
+			// const connection = await this.connection.connect();
+			await this.connection.connect();
 			console.log('Connected to DB');
 			return this.connection;
 		} catch (error) {
@@ -28,10 +29,18 @@ class Database {
 		}
 	}
 
+	/**
+	 *
+	 * @param {string} modelName
+	 * @param {Object} columnDefinitions
+	 * @param {Object} associations
+	 * @param {Object} options
+	 * @param {string} tableName
+	 * @returns {Model}
+	 */
+
 	defineModel(modelName, columnDefinitions, associations, options, tableName) {
-		const newModel = new Model();
-		newModel.define;
-		const modelInstance = Model.define(
+		const newModel = Model.define(
 			this.connection,
 			modelName,
 			columnDefinitions,
@@ -39,7 +48,29 @@ class Database {
 			options,
 			tableName
 		);
-		return modelInstance;
+		// return newModel;
+		return newModel;
+	}
+
+	/**
+	 *
+	 * @param {string} viewName
+	 * @param {Object} columnDefinitions
+	 * @param {Object} options
+	 * @param {string} view
+	 * @returns {Model}
+	 */
+
+	defineView(viewName, columnDefinitions, options, view) {
+		const newView = Model.define(
+			this.connection,
+			viewName,
+			columnDefinitions,
+			null,
+			options,
+			view
+		);
+		return newView;
 	}
 }
 export default Database;

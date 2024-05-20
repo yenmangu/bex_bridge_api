@@ -1,6 +1,4 @@
-import Connection from '../services/dbConnector.js';
 import database from '../modules/database.js';
-const db = new Connection(false);
 /**
  *
  */

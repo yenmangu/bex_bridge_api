@@ -74,6 +74,7 @@ const testGetCards = catchAsync(async (req, res, next) => {
 
 const testGetAll = catchAsync(async (req, res, next) => {
 	try {
+		card.explain();
 		const result = await card.findAll(null, { paginate: true });
 		res.status(200).json({ status: 'success', data: result });
 	} catch (error) {

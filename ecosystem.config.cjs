@@ -3,10 +3,17 @@ module.exports = {
 		{
 			name: 'sql-api',
 			script: 'server.js',
-			env: {
+			watch: ['./'],
+			ignore_watch: ['.git'],
+			env_dev: {
 				NODE_ENV: 'pre_dev'
 			},
-			watch: true
+			env_production: {
+				NODE_ENV: 'production'
+			},
+			env_test: {
+				NODE_ENV: 'test'
+			}
 		}
 	]
 };

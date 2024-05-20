@@ -90,9 +90,26 @@ class Model {
 		return param;
 	}
 
+	explain() {
+		this.query.explain();
+	}
+
+	async useQueryString(queryString) {
+		try {
+			const connection = await this.db.establishedConnection;
+			const result = await connection.execute(queryString);
+			const [rows, fields] = result;
+			return rows;
+		} catch (error) {
+			throw error;
+		}
+	}
+
 	/**
-	 * @param {strin|string[]} [fields=null] fields to select. if not provided, selects all fields
-	 * @param {*} [options=null] Additional options for pagination
+	 * @param {Object} [conditions=null]
+	 * @param {Object|null} [queryParams=null]
+	 * @param {string|string[]} [fields=null] fields to select. if not provided, selects all fields
+	 * @param {Object|null} [options=null] Additional options for pagination
 	 * @param {boolean} [options.paginate=false]
 	 * @param {number} [options.perPage=10]
 	 * @param {number} [options.currentPage=10]
@@ -100,7 +117,19 @@ class Model {
 	 * @param {string} [options.orderField]
 	 * @returns {Promise<any[]>}
 	 */
-	async findAll(fields = null, options = null) {
+	async findAll(
+		conditions = null,
+		queryParams = null,
+		fields = null,
+		options = null
+	) {
+		this.query.clear();
+		const dbQuery = this.query;
+		if (queryParams) {
+			dbQuery.params = queryParams;
+		}
+		console.log('DB Query after if(queryParams): ', dbQuery);
+
 		let fieldsString = '';
 		if (fields) {
 			if (Array.isArray(fields)) fieldsString = fields.join(', ');
@@ -108,36 +137,53 @@ class Model {
 			fieldsString = fields;
 		}
 
-		const query = this.query
-			.select(fields ? `${fieldsString}` : '*')
-			.from(this.table);
+		dbQuery.select(fields ? `${fieldsString}` : '*').from(this.table);
+
+		if (conditions) {
+			dbQuery.where(conditions);
+		}
 
 		if (options) {
+			if (options.limit) {
+				dbQuery.limit(options.limit);
+			}
+			if (options.orderBy) {
+				if (ascend) {
+					dbQuery.orderBy(field);
+				} else {
+					dbQuery.orderBy(field, 'DESC');
+				}
+			}
 			if (options.paginate) {
-				const perPage = options.perPage || 10;
-				const currentPage = options.currentPage || 1;
+				const perPage = perPage || 10;
+				const currentPage = currentPage || 1;
 				const offset = (currentPage - 1) * perPage;
-				query.limit(perPage).offset(offset);
+				dbQuery.limit(perPage).offset(offset);
 			}
 
 			if (options.orderBy && options.orderField) {
-				const field = options.orderField;
 				if (options.ascend) {
-					query.orderBy(field);
+					dbQuery.orderBy(options.orderField);
 				} else {
-					query.orderBy(field, 'DESC');
+					dbQuery.orderBy(field, 'DESC');
 				}
 			}
 		}
 
-		const { query: queryString } = query.getQuery();
+		const { query: queryString, params } = dbQuery.getQuery();
 
-		console.log('QueryString: ', queryString);
+		console.log('QueryString: ', queryString, '\nParams: ', params);
 
 		try {
 			const connection = await this.db.establishedConnection;
-			const result = connection.query(queryString);
-			return result;
+			let result;
+			if (params) {
+				result = await connection.execute(queryString, params);
+			} else {
+				result = await connection.execute(queryString);
+			}
+			const [rows, fields] = result;
+			return rows;
 		} catch (error) {
 			throw error;
 		}
@@ -145,25 +191,51 @@ class Model {
 
 	/**
 	 * This uses the `connection.execute(..)` method to leverage the mysql2 prepared stataments
-	 * @param {*} conditions
+	 * @param {Object} conditions
+	 * @param {Object} [queryParams=null]
+	 * @param {Array<string>} [fields=null]
 	 * @returns {Promise<[]>}
 	 */
-	async findOne(conditions) {
+	async findOne(conditions, queryParams = null, fields = null) {
+		this.query.clear();
+		if (queryParams) {
+			query.params = queryParams;
+		}
 		if (!conditions) {
 			throw new Error('getOne requires at least (1) one condition as parameter');
 		}
-		const query = this.query.select('*').from(this.table).where(conditions);
+		let fieldsString = '';
+		if (fields) {
+			if (Array.isArray(fields)) fieldsString = fields.join(', ');
+		} else {
+			fieldsString = '*';
+		}
+
+		const query = this.query
+			.select(fieldsString)
+			.from(this.table)
+			.where(conditions);
 		console.log('Query in findOne: ', query);
 		console.log('Conditions in findOne: ', conditions);
 
 		const { query: queryString, params } = query.getQuery();
+		console.log('Query Object (this): ', query.getQuery());
+		console.log('Params from getQuery(): ', params);
 
 		console.log('Query string: ', queryString);
 
 		try {
 			const connection = await this.db.establishedConnection;
-			const result = connection.execute(queryString, params);
-			return result;
+			let result;
+			if (params) {
+				console.log('Executing query with params');
+
+				result = await connection.execute(queryString, params);
+			} else {
+				result = await connection.execute(queryString);
+			}
+			const [rows, fields] = result;
+			return rows;
 		} catch (error) {
 			throw error;
 		}
